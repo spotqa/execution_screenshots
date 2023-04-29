@@ -1,8 +1,11 @@
 import requests
 import pendulum
+from docx.oxml import parse_xml, OxmlElement
+from docx.oxml.ns import qn
 from docx.shared import Inches
 from docx.shared import Length
 from docx.shared import RGBColor
+from docx.table import _Cell
 
 
 def insert_image(cell, screenshot_image, screenshot_folder):
@@ -83,3 +86,56 @@ def outcome_color(outcome):
         return RGBColor(203, 42,42)
     else:
         return RGBColor(206, 206, 206)
+
+
+def set_cell_border(cell: _Cell, **kwargs):
+    """
+    Set cell`s border
+    Usage:
+
+    set_cell_border(
+        cell,
+        top={"sz": 12, "val": "single", "color": "#FF0000", "space": "0"},
+        bottom={"sz": 12, "color": "#00FF00", "val": "single"},
+        start={"sz": 24, "val": "dashed", "shadow": "true"},
+        end={"sz": 12, "val": "dashed"},
+    )
+    """
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+
+    # check for tag existnace, if none found, then create one
+    tcBorders = tcPr.first_child_found_in("w:tcBorders")
+    if tcBorders is None:
+        tcBorders = OxmlElement('w:tcBorders')
+        tcPr.append(tcBorders)
+
+    # list over all available tags
+    for edge in ('start', 'top', 'end', 'bottom', 'insideH', 'insideV'):
+        edge_data = kwargs.get(edge)
+        if edge_data:
+            tag = 'w:{}'.format(edge)
+
+            # check for tag existnace, if none found, then create one
+            element = tcBorders.find(qn(tag))
+            if element is None:
+                element = OxmlElement(tag)
+                tcBorders.append(element)
+
+            # looks like order of attributes is important
+            for key in ["sz", "val", "color", "space", "shadow"]:
+                if key in edge_data:
+                    element.set(qn('w:{}'.format(key)), str(edge_data[key]))
+
+
+def format_table(tbl):
+    tbl.style = 'Normal Table'
+    for row in tbl.rows:
+        for cell in row.cells:
+            set_cell_border(
+                cell,
+                top={"sz": 0, "val": "none", "color": "#FF0000", "space": "0"},
+                bottom={"sz": 0, "color": "#00FF00", "val": "none", "space": "0"},
+                start={"sz": 0, "val": "none", "shadow": "false", "space": "0"},
+                end={"sz": 0, "val": "none", "space": "0"},
+            )
