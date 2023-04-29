@@ -8,18 +8,22 @@ import time
 import urllib.parse
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from pathvalidate import sanitize_filename
-from functions import get_request, format_duration, get_step_checkpoint_names, outcome_color, insert_image, add_space
+from functions import get_request, format_duration, get_step_checkpoint_names, \
+    outcome_color, insert_image, add_space, format_table
 
 
 def check_args(argv):
     arg_token = ""
     arg_id = 0
+    arg_side = True
     arg_env = "api-app2.virtuoso.qa"
     desc = "Virtuoso test execution report self extractor."
     arg_help = "\nUsage:  {0} OPTIONS\n\n{1}\n\nOptions:" \
                "\n\t-t, --token uuid    Virtuoso token" \
                "\n\t-i, --id int        Virtuoso execution id" \
-               "\n\t-e, --env string    Environment [OPTIONAL] (default = \"api-app2.virtuoso.qa\")>" \
+               "\n\t-e, --env string    Environment [OPTIONAL] (default = \"api-app2.virtuoso.qa\")" \
+               "\n\t-b, --block         Layout images are displayed horizontally blocks " \
+               "[OPTIONAL] (default Side-by-side)" \
                "\n\nCopyright SPOTQA LTD 2023 | <support@virtuoso.qa>\n".format(argv[0], desc)
 
     def _help():
@@ -27,7 +31,7 @@ def check_args(argv):
         sys.exit(2)
 
     try:
-        opts, args = getopt.getopt(argv[1:], "ht:i:e:", ["help", "token=", "id=", "env="])
+        opts, args = getopt.getopt(argv[1:], "ht:i:e:b", ["help", "token=", "id=", "env=", "block="])
     except:
         _help()
 
@@ -40,15 +44,17 @@ def check_args(argv):
             arg_id = arg
         elif opt in ("-e", "--env"):
             arg_env = arg
+        elif opt in ("-b", "--block"):
+            arg_side = False
 
     if arg_token == "" or arg_id == "":
         _help()
 
-    return arg_token, arg_id, arg_env
+    return arg_token, arg_id, arg_env, arg_side
 
 
 if __name__ == "__main__":
-    VIRTUOSO_TOKEN, VIRTUOSO_EXECUTION_ID, VIRTUOSO_API = check_args(sys.argv)
+    VIRTUOSO_TOKEN, VIRTUOSO_EXECUTION_ID, VIRTUOSO_API, SIDE_BY_SIDE = check_args(sys.argv)
     try :
         SCREENSHOT_FOLDER = "screenshots-{}".format(round(time.time() * 1000))
         VIRTUOSO_API_EXECUTION_DETAILS_PATH = "executions"
@@ -120,7 +126,8 @@ if __name__ == "__main__":
                     screenshot = steps[step].get('screenshot')
 
                     if beforeScreenshot or screenshot:
-                        table = DOC.add_table(rows=2, cols=2 if beforeScreenshot and screenshot else 1)
+                        table = DOC.add_table(rows=2 if SIDE_BY_SIDE else 4,
+                                              cols=2 if SIDE_BY_SIDE and beforeScreenshot and screenshot else 1)
                         table.alignment = WD_TABLE_ALIGNMENT.CENTER
 
                     if beforeScreenshot:
@@ -132,13 +139,16 @@ if __name__ == "__main__":
                         insert_image(cell2, beforeScreenshot, SCREENSHOT_FOLDER)
 
                     if screenshot:
-                        cell1 = table.rows[0].cells[1 if beforeScreenshot else 0]
-                        cell2 = table.rows[1].cells[1 if beforeScreenshot else 0]
+                        cell1 = table.rows[0 if SIDE_BY_SIDE else 2].cells[
+                            1 if SIDE_BY_SIDE and beforeScreenshot else 0]
+                        cell2 = table.rows[1 if SIDE_BY_SIDE else 3].cells[
+                            1 if SIDE_BY_SIDE and beforeScreenshot else 0]
                         cell1_paragraph = cell1.paragraphs[0]
                         cell1_paragraph.alignment = 0  # center align the image
                         cell1_paragraph.add_run('Screenshot after step execution')
                         insert_image(cell2, screenshot, SCREENSHOT_FOLDER)
 
+                    format_table(table)
                     add_space(2, DOC)
 
         fname = sanitize_filename(title + '.docx')

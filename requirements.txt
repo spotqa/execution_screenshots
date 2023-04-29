@@ -1,4 +1,4 @@
 requests==2.29.0
-docx~=0.2.4
+python-docx==0.8.11
 pendulum~=2.1.2
 pathvalidate~=2.5.2
