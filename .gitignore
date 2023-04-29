@@ -1,2 +1,7 @@
 
-.idea/inspectionProfiles/profiles_settings.xml
+.idea
+./idea/*
+*.docx
+screenshots*
+dist*
+build*
