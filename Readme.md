@@ -1,5 +1,15 @@
 # Virtuoso execution step report
 
+## Requirements
+Python >= 3.11 installed
+
+pip >= 23.1.2 installed
+
+```console
+pip install -r requirements.txt
+```
+
+## Usage
 ```console
 Usage:  python main.py OPTIONS
 
