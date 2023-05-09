@@ -4,7 +4,7 @@
 - Python >= 3.11
 - pip >= 23.1.2
 
-### Install packages
+### Install python packages
 ```console
 pip install -r requirements.txt
 ```
