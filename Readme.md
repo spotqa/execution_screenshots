@@ -1,8 +1,8 @@
 # Virtuoso execution step report
 
 ## Requirements
-- Python >= 3.11 installed
-- pip >= 23.1.2 installed
+- Python >= 3.11
+- pip >= 23.1.2
 
 ### Install packages
 ```console
